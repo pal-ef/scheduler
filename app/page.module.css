@@ -1,0 +1,161 @@
+.main {
+  margin-top: 100px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  align-items: center;
+  text-align: center;
+  color: #6C6C6C;
+  font-size: 12px;
+}
+
+.column > h1 {
+  margin-bottom: 30px;
+}
+
+.box {
+  background-color: #D9D9D9;
+  min-height: 80vh;
+  width: 350px;
+}
+
+.processContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.processContainer > h3 {
+  font-size: 25px;
+}
+
+.processTimer {
+  font-size: 100px;
+}
+
+.process {
+  margin-top: 30px;
+  width: 80%;
+  background-color: #D9D9D9;
+}
+
+.processID {
+  background-color: #747474;
+  width: 100%;
+  text-align: center;
+  padding: 10px;
+  color: white;
+  font-size: 16px;
+}
+
+.processTable {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+  padding-bottom: 5px;
+}
+
+
+.processRow {
+  font-size: 18px;
+  width: 100%;
+  padding: 15px;
+}
+
+.item {
+  margin: 10px 0 10px 0;
+  width: 100%;
+  padding: 15px;
+  background-color: rgb(97, 97, 97);
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  background-color: #333232;
+  color: white;
+  padding: 10px 30px 10px 30px;
+}
+
+.button {
+  background-color:cornflowerblue;
+  padding: 10px 30px 10px 30px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.modal {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.724)
+}
+
+.form {
+  margin: 150px auto 0 auto;
+  width: 700px;
+  padding: 20px;
+  background-color: white;
+}
+
+
+.closeButton {
+  background-color:crimson;
+  padding: 10px 30px 10px 30px;
+  cursor: pointer;
+  font-weight: bold;
+  color: white;
+  text-align: center;
+}
+
+.submitButton {
+
+  margin-top: 25px;
+  background-color:cornflowerblue;
+  padding: 10px 30px 10px 30px;
+  cursor: pointer;
+  font-weight: bold;
+  color: white;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+
+.addProcessTitle {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.formLabel {
+  margin-bottom: 8px;
+}
+
+.formInput {
+  padding: 10px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.formInputInvalid {
+  padding: 10px;
+  width: 100%;
+  margin-bottom: 20px;
+  border: 2px solid red;
+}
