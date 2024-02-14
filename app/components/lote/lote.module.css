@@ -1,0 +1,20 @@
+.lote {
+    background-color: white;
+    padding: 10px 15px 15px 15px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-radius: 8px;
+}
+
+.proceso {
+    background-color: rgb(222, 92, 45);
+    color: white;
+    padding: 10px 20px;
+}
+
+.label {
+    font-size: 16px;
+    color: rgb(76, 76, 76);
+}

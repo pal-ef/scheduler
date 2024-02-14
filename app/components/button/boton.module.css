@@ -1,0 +1,27 @@
+.boton {
+    cursor: pointer;
+    border-radius: 2.5px;
+    color: white;
+    font-size: 20px;
+    width: 150px;
+    text-align: center;
+    padding: 5px 0 5px 0;
+}
+
+.start {
+    background-color: #4AB9B9;
+}
+
+.int {
+    background-color: #cc5409;
+}
+
+.confirm {
+    background-color: #079cc6;
+    padding: 10px;
+}
+
+.cancel {
+    background-color: #b4b4b4;
+    padding: 10px;
+}

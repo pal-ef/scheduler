@@ -11,17 +11,26 @@ import { useState, useEffect } from "react";
 
 import { evaluate } from "mathjs"
 
+function customCeil(number) {
+  let decimalPart = number - Math.floor(number);
+  if (decimalPart === 0.25) {
+      return Math.ceil(number);
+  }
+  return Math.ceil(number - 0.001); // Adjusting to prevent rounding up when decimal part is .25
+}
+
+
 class Lot {
   content = []
   isFull = false
 
   add(process) {
-    if(this.content.length > 3) {
+    if (this.content.length > 3) {
       this.isFull = true
       return false;
     } else {
       this.content.push(process)
-    }    
+    }
   }
 }
 
@@ -38,23 +47,33 @@ class Process {
 var initialCountdown;
 var idCount = 0;
 
-const Bar = ({ openModal }) => {
+const Bar = ({ openModal, startProcess }) => {
 
   const handleOpenModal = () => {
     openModal();
   }
 
+  const handleStartProcess = () => {
+    startProcess();
+  }
+
   return (
     <div className={styles.bar}>
-      <p className={styles.button} onClick={handleOpenModal}>Add process</p>
+      <p className={styles.button} onClick={handleOpenModal}>Agregar Proceso</p>
+      <p className={styles.button} onClick={handleStartProcess}>Empezar</p>
     </div>
   )
 }
+
+
 
 export default function Home() {
   const [currentProcess, setCurrentProcess] = useState()
   const [finished, setFinished] = useState([])
   const [lot, setLot] = useState([])
+  const [lots = setLots] = useState([])
+  const [hasStarted, setHasStarted] = useState(false)
+  const [globalCounter, setGlobalCounter] = useState(4)
 
   const [countdown, setCountdown] = useState(initialCountdown)
   const [isRunning, setIsRunning] = useState(false)
@@ -67,6 +86,10 @@ export default function Home() {
     let countdownInterval;
 
     if (isRunning) {
+      setGlobalCounter(globalCounter - 1);
+      if (globalCounter < 0) {
+        setGlobalCounter(4)
+      }
       countdownInterval = setInterval(() => {
         setCountdown(prevCountdown => {
           if (prevCountdown > 0) {
@@ -82,19 +105,21 @@ export default function Home() {
         });
       }, 1000);
     } else {
-      // we check if other process needs to be processed
-      if (lot.length > 0) {
-        var cupo = lot[0]
-        setCurrentProcess(cupo);
-        setLot(lot.slice(1))
+      if (hasStarted) {
+        // we check if other process needs to be processed
+        if (lot.length > 0) {
+          var cupo = lot[0]
+          setCurrentProcess(cupo);
+          setLot(lot.slice(1))
 
-        setIsRunning(true);
-        setCountdown(cupo.eta);
+          setIsRunning(true);
+          setCountdown(cupo.eta);
+        }
       }
     }
 
     return () => clearInterval(countdownInterval);
-  }, [isRunning, initialCountdown, start]);
+  }, [isRunning, initialCountdown, start, hasStarted]);
 
   const openModal = () => {
     setIsModalOpenned(true)
@@ -102,6 +127,10 @@ export default function Home() {
 
   const closeModal = () => {
     setIsModalOpenned(false)
+  }
+
+  const startProcess = () => {
+    setHasStarted(true);
   }
 
   const [inputValue, setInputValue] = useState("");
@@ -131,21 +160,21 @@ export default function Home() {
   const handleEtaValChange = (event) => {
     setEtaVal(event.target.value);
   };
+  
 
   // Event handler for form submission
   const handleSubmit = (event) => {
     // Prevent the default form submission behavior
     event.preventDefault();
 
-    if(validInputValue && validOperationVal) {
+    if (validInputValue && validOperationVal && etaVal > 0 && Number.isFinite(eval(operationVal))) {
       const n_pro = new Process(inputValue, operationVal, etaVal, idCount);
       idCount++;
+      
       if (lot.length > 0) {
-        console.log("asd")
         setLot([...lot, n_pro])
       } else {
         setLot([n_pro])
-        console.log("asd2")
       }
 
       setInputValue("");
@@ -153,6 +182,8 @@ export default function Home() {
       setEtaVal(5);
 
       closeModal();
+
+      
 
       setStart(!start);
     }
@@ -189,16 +220,16 @@ export default function Home() {
                 max={60}
               />
             </form>
-            <p className={styles.submitButton} onClick={handleSubmit}>Create new process</p>
-            <p className={styles.closeButton} onClick={closeModal}>Close Modal</p>
+            <p className={styles.submitButton} onClick={handleSubmit}>Crear nuevo proceso</p>
+            <p className={styles.closeButton} onClick={closeModal}>Cancelar</p>
           </div>
         </div> : null}
-      <Bar openModal={openModal} />
+      <Bar openModal={openModal} startProcess={startProcess} />
       <main className={styles.main}>
         <div className={styles.column}>
-          <h1>Pending</h1>
+          <h1>{customCeil(lot.length / 4)} pendientes</h1>
           <div className={styles.box}>
-            {lot.map((process) => (
+            {lot.slice(0, globalCounter).map((process) => (
               <p key={process.id} className={styles.item}>
                 Proceso ID {process.id}
               </p>
@@ -253,7 +284,7 @@ export default function Home() {
                 <br />
                 Programador: {process.name}
                 <br />
-                Resultado: {process.solved}
+                Resultado: {process.solved == "Infinity" ? "Invalido" : process.solved}
               </p>
             ))}
           </div>
