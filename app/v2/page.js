@@ -250,7 +250,7 @@ export default function Aplicacion() {
 
       <div className={styles.contenedorColumnas}>
 
-        <Columna title={"Pendientes"}>
+        <Columna title={lotes.length + " lotes pendientes"}>
           {lotes ? lotes.map((lote, index) => (
             <Lote key={index} id={"LOTE " + index}>
               {lote.contenido.map((pro) => (
