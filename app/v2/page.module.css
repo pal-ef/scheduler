@@ -21,6 +21,13 @@
     padding: 10px 20px;
 }
 
+.procesoActual {
+    background-color: rgb(222, 92, 45);
+    color: white;
+    padding: 10px 20px;
+    margin-bottom: 30px;
+}
+
 .processing_zone_container {
     width: 350px;
     text-align: center;

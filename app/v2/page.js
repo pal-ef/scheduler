@@ -66,6 +66,7 @@ export default function Aplicacion() {
   const [processed, setProcessed] = useState([])
   const [pause, setPause] = useState(false)
   const [current, setCurrent] = useState()
+  const [prevCurrent, setPrevCurrent] = useState(null)
   const [trigger2, setTrigger2] = useState(false)
   const [int, setInt] = useState(false)
   // --------------------
@@ -187,6 +188,13 @@ export default function Aplicacion() {
 
 
   useEffect(() => {
+    if (prevCurrent != null) {
+      setProcessed([...processed, prevCurrent])
+    }
+    setPrevCurrent(current)
+  }, [current]);
+
+  useEffect(() => {
     if (lotes.length > 0) {
       let working_lot = lotes[0]
       setLotes(lotes.slice(1))
@@ -205,7 +213,7 @@ export default function Aplicacion() {
         }
         else {
           if (processing.length > 0) {
-            setTrigger2(!trigger2);
+            //setTrigger2(!trigger2);
             setCurrent(processing[0])
             setProcessing(processing.slice(1))
             setCountdown(processing[0].tme)
@@ -266,7 +274,10 @@ export default function Aplicacion() {
 
           <>
             <p className={styles.countdown}>{countdown}</p>
-
+            {current ? 
+            <p className={styles.procesoActual}>({current.id}) Resultado: {current.operacion}</p>
+              : null
+            }
             <div className={styles.processing_zone}>
               {processing ? processing.map((pro) => (
                 <p key={pro.id} className={styles.proceso}>({pro.id}) Operación: {pro.operacion} ETA: {pro.tme}s</p>
