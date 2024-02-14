@@ -22,7 +22,7 @@ function generateRandomExpression() {
 }
 
 function generateRandomNumber() {
-  return Math.floor(Math.random() * 15) + 1; // Generates a random integer between 1 and 20
+  return Math.floor(Math.random() * 20) + 1; // Generates a random integer between 1 and 20
 }
 
 class Proceso {
@@ -69,6 +69,7 @@ export default function Aplicacion() {
   const [prevCurrent, setPrevCurrent] = useState(null)
   const [trigger2, setTrigger2] = useState(false)
   const [int, setInt] = useState(false)
+  const [interrupted, setInterrupted] = useState(false)
   // --------------------
   const [keyPressed, setKeyPressed] = useState('');
 
@@ -83,9 +84,17 @@ export default function Aplicacion() {
   }
 
   const interrumpir_procesos = () => {
-    console.log("Interrumpiendo proceso actual.")
-  }
+    setInterrupted(true)
+    setStarted(false)
 
+    let local_current = current
+    local_current.tme = countdown
+    
+    setProcessing([...processing, current])
+    setCurrent(null)
+    
+    setStarted(true)
+  }
   const cerrar_modal_y_agregar = () => {
     setModalOpen(false)
 
@@ -122,7 +131,7 @@ export default function Aplicacion() {
     setKeyPressed(event.key)
 
     if (event.key == 'e') {
-      interrumpir()
+      interrumpir_procesos()
     } else if (event.key == 'w') {
       terminateWithError()
     } else if (event.key == 'p') {
@@ -167,7 +176,7 @@ export default function Aplicacion() {
   const continuar = () => {
     if (int) {
       setInt(false)
-      setTrigger2(!trigger2);
+      //setTrigger2(!trigger2);
       setCurrent(processing[0])
       setProcessing(processing.slice(1))
       setCountdown(processing[0].tme)
@@ -188,10 +197,18 @@ export default function Aplicacion() {
 
 
   useEffect(() => {
-    if (prevCurrent != null) {
+    if (prevCurrent != null && !interrupted) {
       setProcessed([...processed, prevCurrent])
     }
-    setPrevCurrent(current)
+    if(interrupted) {
+      setPrevCurrent(null)
+      setInterrupted(false)
+      setCountdown(0)
+      console.log("yo")
+    } else {
+      setPrevCurrent(current)
+    }
+    
   }, [current]);
 
   useEffect(() => {
@@ -202,7 +219,6 @@ export default function Aplicacion() {
     } else {
       setStarted(false)
     }
-
   }, [trigger]);
 
   useEffect(() => {
@@ -218,6 +234,10 @@ export default function Aplicacion() {
             setProcessing(processing.slice(1))
             setCountdown(processing[0].tme)
           } else {
+            if(lotes.length == 0 && current != null) {
+              setCountdown(current.tme)
+              setCurrent(null)
+            }
             setTrigger(!trigger)
           }
         }
@@ -269,11 +289,11 @@ export default function Aplicacion() {
         </Columna>
 
         <div className={styles.processing_zone_container}>
-          <h2>{started ? "Procesando" : "Procesamiento en espera"}</h2>
+          <h2>{started ? "Procesando" : "Modo espera"}</h2>
 
 
           <>
-            <p className={styles.countdown}>{countdown}</p>
+            {started ? <p className={styles.countdown}>{countdown}</p> : null }
             {current ? 
             <p className={styles.procesoActual}>({current.id}) Resultado: {current.operacion}</p>
               : null
