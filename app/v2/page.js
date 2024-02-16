@@ -13,7 +13,7 @@ import Columna from "../components/columna/Columna";
 import Lote from "../components/lote/Lote";
 
 function generateRandomExpression() {
-  const operators = ['+', '-', '*', '/'];
+  const operators = ['+', '-', '*', '/', '%'];
   const randomNumber = () => Math.floor(Math.random() * 10) + 1; // Generate a random number between 1 and 10
   const randomOperator = () => operators[Math.floor(Math.random() * operators.length)]; // Pick a random operator
 
@@ -28,7 +28,8 @@ function generateRandomNumber() {
 class Proceso {
   constructor(op, eta, id) {
     this.operacion = op;
-    this.tme = eta;
+    this.tme = eta; // Guardar el tme inicial
+    this.eta = eta;
     this.id = id
     this.operacion_resuelta = evaluate(op)
   }
@@ -70,8 +71,11 @@ export default function Aplicacion() {
   const [trigger2, setTrigger2] = useState(false)
   const [int, setInt] = useState(false)
   const [interrupted, setInterrupted] = useState(false)
+  const [globalCounter, setGlobalCounter] = useState(0);
   // --------------------
   const [keyPressed, setKeyPressed] = useState('');
+
+  let auxCounter = globalCounter;
 
   const agregar_procesos = () => {
     setModalOpen(true);
@@ -88,7 +92,7 @@ export default function Aplicacion() {
     setStarted(false)
 
     let local_current = current
-    local_current.tme = countdown
+    local_current.eta = countdown
     
     setProcessing([...processing, current])
     setCurrent(null)
@@ -157,7 +161,7 @@ export default function Aplicacion() {
       setInt(true);
       setStarted(false)
       let localized = current
-      current.tme = countdown
+      current.eta = countdown
 
       setProcessing([...processing, localized])
       setProcessed(processed.slice(0, processed.length - 1))
@@ -179,7 +183,7 @@ export default function Aplicacion() {
       //setTrigger2(!trigger2);
       setCurrent(processing[0])
       setProcessing(processing.slice(1))
-      setCountdown(processing[0].tme)
+      setCountdown(processing[0].eta)
 
       setStarted(true)
       setPause(!pause)
@@ -224,6 +228,8 @@ export default function Aplicacion() {
   useEffect(() => {
     if (started) {
       const timer = setTimeout(() => {
+        auxCounter++;
+        setGlobalCounter(auxCounter);
         if (countdown > 1) {
           setCountdown(countdown - 1); // Decrease the countdown by 1
         }
@@ -232,10 +238,10 @@ export default function Aplicacion() {
             //setTrigger2(!trigger2);
             setCurrent(processing[0])
             setProcessing(processing.slice(1))
-            setCountdown(processing[0].tme)
+            setCountdown(processing[0].eta)
           } else {
             if(lotes.length == 0 && current != null) {
-              setCountdown(current.tme)
+              setCountdown(current.eta)
               setCurrent(null)
             }
             setTrigger(!trigger)
@@ -290,17 +296,18 @@ export default function Aplicacion() {
 
         <div className={styles.processing_zone_container}>
           <h2>{started ? "Procesando" : "Modo espera"}</h2>
+          <p className={styles.countdown}>Contador global: {globalCounter}</p>
 
 
           <>
             {started ? <p className={styles.countdown}>{countdown}</p> : null }
             {current ? 
-            <p className={styles.procesoActual}>({current.id}) Resultado: {current.operacion}</p>
+            <p className={styles.procesoActual}>({current.id}) Resultado: {current.operacion} ETA: {current.eta}s TME: {current.tme}s</p>
               : null
             }
             <div className={styles.processing_zone}>
               {processing ? processing.map((pro) => (
-                <p key={pro.id} className={styles.proceso}>({pro.id}) Operación: {pro.operacion} ETA: {pro.tme}s</p>
+                <p key={pro.id} className={styles.proceso}>({pro.id}) Operación: {pro.operacion} ETA: {pro.eta}s TME: {pro.tme}s</p>
               )) : null}
             </div>
           </>
@@ -308,8 +315,11 @@ export default function Aplicacion() {
 
         <Columna title={"Terminados"}>
           <Lote id={"TERMINADOS"}>
-            {processed ? processed.map(pro => (
-              <p key={pro.id} className={styles.proceso}>({pro.id}) Resultado: {pro.operacion_resuelta}</p>
+            {processed ? processed.map((pro, index )=> (
+              <div key={pro.id}>
+                <p className={styles.proceso}>({pro.id}) Resultado: {pro.operacion_resuelta}</p>
+                {(index + 1) % 4 === 0 && <p>________________</p>}
+              </div>
             )) : null}
           </Lote>
         </Columna>
