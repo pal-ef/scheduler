@@ -135,9 +135,9 @@ export default function Aplicacion() {
     setKeyPressed(event.key)
 
     if (event.key == 'e') {
-      interrumpir_procesos()
-    } else if (event.key == 'w') {
       terminateWithError()
+    } else if (event.key == 'w') {
+      interrumpir_procesos()
     } else if (event.key == 'p') {
       pausar()
     } else if (event.key == 'c') {
@@ -208,7 +208,6 @@ export default function Aplicacion() {
       setPrevCurrent(null)
       setInterrupted(false)
       setCountdown(0)
-      console.log("yo")
     } else {
       setPrevCurrent(current)
     }
