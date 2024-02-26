@@ -43,6 +43,11 @@ class Proceso {
   }
 }
 
+// Tiempos
+// - [X] Llegada
+// - [X] Finalizacion
+// - [ ] Respuesta
+
 class Lot {
   contenido = []
   estaLleno = false
@@ -108,12 +113,21 @@ export default function Aplicacion() {
       setCountdown(current_process.tme)
       
       let new_memory = memory.slice(1);
-      new_memory.push(lotes[0]);
+      
+      if(lotes.length > 0 && memory.length < 4) {
+        let toBeAdded_process = lotes[0];
+        toBeAdded_process.tiempo_llegada = globalCounter;
+        new_memory.push(toBeAdded_process)
+      };
 
       setMemory(new_memory);
 
       setLotes(lotes.slice(1));
+      
+      if(current_process.tiempo_respuesta == null) current_process.tiempo_respuesta = globalCounter; 
       setCurrent(current_process);
+      console.log(current_process.tiempo_respuesta);
+
       setProcessing(current_process);
     } else {
       setStarted(false)
@@ -137,7 +151,13 @@ export default function Aplicacion() {
 
   const setToMemory = () => {
     // Paso #1 Lograr colocarlos en "ejecucion"
-    setMemory(lotes.slice(0,3));
+    let new_memory = lotes.slice(0,3); 
+
+    for(let i = 0; i < 3; i++) {
+      new_memory[i].tiempo_llegada = 0;
+    }
+
+    setMemory(new_memory);
     setLotes(lotes.slice(3))
   }
     
@@ -227,6 +247,7 @@ export default function Aplicacion() {
 
   useEffect(() => {
     if (prevCurrent != null && !interrupted) {
+      prevCurrent.tiempo_finalizacion = globalCounter;
       setProcessed([...processed, prevCurrent])
     }
     if (interrupted) {
@@ -251,8 +272,8 @@ export default function Aplicacion() {
           setCountdown(countdown - 1); // Decrease the countdown by 1
         }
         else {
-          setTrigger(!trigger);
-          setCurrent(null);
+            setTrigger(!trigger);
+            setCurrent(null);
         }
       }, 1000); // Delay of 1000 milliseconds (1 second) for each countdown iteration
 
@@ -296,9 +317,9 @@ export default function Aplicacion() {
           {/* // Esto mapea los lotes y por cada lote crea un "Lote" */}
           {/* // TODO: Crear un solo "Lote" con todos los procesos */}
             <Lote id={"Procesos "}>
-              {lotes.map((pro) => (
+              {lotes ? lotes.map((pro) => (
                 <p key={pro.id} className={styles.proceso}>({pro.id}) Operación: {pro.operacion}</p>
-              ))}
+              )) : null }
             </Lote>
           
         </Columna>
