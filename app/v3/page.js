@@ -22,7 +22,7 @@ function generateRandomExpression() {
 }
 
 function generateRandomNumber() {
-  return Math.floor(Math.random() * 20) + 1; // Generates a random integer between 1 and 20
+  return Math.floor(Math.random() * 10) + 1; // Generates a random integer between 1 and 20
 }
 
 class Proceso {
@@ -49,11 +49,6 @@ class Lot {
   estaVacio = true
 
   agregar(proc) {
-    this.estaVacio = false
-    if (this.contenido.length > 3) {
-      this.estaLleno = true
-      return false;
-    }
     this.contenido.push(proc)
     return true;
   }
@@ -68,7 +63,7 @@ export default function Aplicacion() {
   const [isModalOpen, setModalOpen] = useState(false)
   const [started, setStarted] = useState(false)
   const [lotes, setLotes] = useState([])
-  const [nProcess, setNProcess] = useState(5);
+  const [nProcess, setNProcess] = useState(25);
   const [processing, setProcessing] = useState();
   const [countdown, setCountdown] = useState(0);
   const [trigger, setTrigger] = useState(false)
@@ -81,7 +76,8 @@ export default function Aplicacion() {
   const [interrupted, setInterrupted] = useState(false)
   const [globalCounter, setGlobalCounter] = useState(0);
   // --------------------
-  const [keyPressed, setKeyPressed] = useState('');
+  const [memory, setMemory] = useState([])
+  const [keyPressed, setKeyPressed] = useState()
 
   let auxCounter = globalCounter;
 
@@ -95,58 +91,77 @@ export default function Aplicacion() {
     setPause(!pause)
   }
 
+  const empezar_procesos2 = () => {
+    // setTrigger(!trigger)
+    // setStarted(true)
+    // setPause(!pause)
+    setToMemory() // pone 4 dentro de la memoria
+    setTrigger(!trigger)
+    setStarted(true)
+    setPause(!pause)
+  }
+
+  useEffect(() => {
+    if (memory.length > 0) {
+      // lotes == procesos
+      let current_process = memory[0]
+      setCountdown(current_process.tme)
+      
+      let new_memory = memory.slice(1);
+      new_memory.push(lotes[0]);
+
+      setMemory(new_memory);
+
+      setLotes(lotes.slice(1));
+      setCurrent(current_process);
+      setProcessing(current_process);
+    } else {
+      setStarted(false)
+    }
+  }, [trigger]);
+
   const interrumpir_procesos = () => {
     setInterrupted(true)
     setStarted(false)
 
+    // Set current remaining time
     let local_current = current
     local_current.eta = countdown
 
-    setProcessing([...processing, current])
+    //setProcessing([...processing, current])
+    setMemory([...memory, current])
     setCurrent(null)
 
     setStarted(true)
   }
 
+  const setToMemory = () => {
+    // Paso #1 Lograr colocarlos en "ejecucion"
+    setMemory(lotes.slice(0,3));
+    setLotes(lotes.slice(3))
+  }
+    
+
   // Cierra modal, crea lotes y los agrega
   const cerrar_modal_y_agregar = () => {
     setModalOpen(false)
 
-    let lotes_local = []
-
-    let numero_procesos = nProcess
-
-    let numero_lotes = Math.floor(numero_procesos / 4)
-    let restantes = numero_procesos % 4
-
     let global_counter = 0
+    let l = []
 
-    for (let i = 0; i < numero_lotes; i++) {
-      let l = new Lot()
-      for (let j = 0; j < 4; j++) {
-        global_counter++;
-        l.agregar(new Proceso(generateRandomExpression(), generateRandomNumber(), global_counter))
-      }
-      lotes_local.push(l);
+    for (let i = 0; i < nProcess; i++) {
+      l.push(new Proceso(generateRandomExpression(), generateRandomNumber(), global_counter))
+      global_counter++;
     }
-
-    if (restantes) {
-      let l = new Lot()
-      for (let j = 0; j < restantes; j++) {
-        global_counter++;
-        l.agregar(new Proceso(generateRandomExpression(), generateRandomNumber(), global_counter))
-      }
-      lotes_local.push(l);
-    }
-    setLotes(lotes_local)
+    setLotes(l)
   }
 
   const handleKeyDown = (event) => {
     setKeyPressed(event.key)
 
-    if (event.key == 'e') {
+    if (event.key == 'w') {
       terminateWithError()
-    } else if (event.key == 'w') {
+    } else if (event.key == 'e') {
       interrumpir_procesos()
     } else if (event.key == 'p') {
       pausar()
@@ -224,15 +239,8 @@ export default function Aplicacion() {
 
   }, [current]);
 
-  useEffect(() => {
-    if (lotes.length > 0) {
-      let working_lot = lotes[0]
-      setLotes(lotes.slice(1))
-      setProcessing(working_lot.contenido);
-    } else {
-      setStarted(false)
-    }
-  }, [trigger]);
+
+
 
   useEffect(() => {
     if (started) {
@@ -243,18 +251,8 @@ export default function Aplicacion() {
           setCountdown(countdown - 1); // Decrease the countdown by 1
         }
         else {
-          if (processing.length > 0) {
-            //setTrigger2(!trigger2);
-            setCurrent(processing[0])
-            setProcessing(processing.slice(1))
-            setCountdown(processing[0].eta)
-          } else {
-            if (lotes.length == 0 && current != null) {
-              setCountdown(current.eta)
-              setCurrent(null)
-            }
-            setTrigger(!trigger)
-          }
+          setTrigger(!trigger);
+          setCurrent(null);
         }
       }, 1000); // Delay of 1000 milliseconds (1 second) for each countdown iteration
 
@@ -285,7 +283,7 @@ export default function Aplicacion() {
 
       <Barra>
         <Boton text="Agregar" type={buttonTypes.start} action={agregar_procesos} />
-        <Boton text="Empezar" type={buttonTypes.start} action={empezar_procesos} />
+        <Boton text="Empezar" type={buttonTypes.start} action={empezar_procesos2} />
         <Boton text="Interrumpir" type={buttonTypes.int} action={interrumpir} />
         <Boton text="Pausar" type={buttonTypes.int} action={pausar} />
         <Boton text="Continuar" type={buttonTypes.int} action={continuar} />
@@ -293,14 +291,16 @@ export default function Aplicacion() {
 
       <div className={styles.contenedorColumnas}>
 
-        <Columna title={lotes.length + " lotes pendientes"}>
-          {lotes ? lotes.map((lote, index) => (
-            <Lote key={index} id={"LOTE " + index}>
-              {lote.contenido.map((pro) => (
+        {/* // TODO: Mostrar numero de procesos en vez de lotes */}
+        <Columna title={lotes.length + " procesos en espera"}>
+          {/* // Esto mapea los lotes y por cada lote crea un "Lote" */}
+          {/* // TODO: Crear un solo "Lote" con todos los procesos */}
+            <Lote id={"Procesos "}>
+              {lotes.map((pro) => (
                 <p key={pro.id} className={styles.proceso}>({pro.id}) Operación: {pro.operacion}</p>
               ))}
             </Lote>
-          )) : null}
+          
         </Columna>
 
         <div className={styles.processing_zone_container}>
@@ -309,13 +309,13 @@ export default function Aplicacion() {
 
 
           <>
-            {started ? <p className={styles.countdown}>{countdown}</p> : null}
+            {started ? <p className={styles.countdown}>Faltan {countdown} segundos</p> : null}
             {current ?
               <p className={styles.procesoActual}>({current.id}) Resultado: {current.operacion} ETA: {current.eta}s TME: {current.tme}s</p>
               : null
             }
             <div className={styles.processing_zone}>
-              {processing ? processing.map((pro) => (
+              {memory ? memory.map((pro) => (
                 <p key={pro.id} className={styles.proceso}>({pro.id}) Operación: {pro.operacion} ETA: {pro.eta}s TME: {pro.tme}s</p>
               )) : null}
             </div>
@@ -327,7 +327,6 @@ export default function Aplicacion() {
             {processed ? processed.map((pro, index) => (
               <div key={pro.id}>
                 <p className={styles.proceso}>({pro.id}) Resultado: {pro.operacion_resuelta}</p>
-                {(index + 1) % 4 === 0 && <p>________________</p>}
               </div>
             )) : null}
           </Lote>

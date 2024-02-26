@@ -2,7 +2,7 @@ import styles from "./input.module.css";
 import { useState } from "react"
 
 function Entrada({ onInputChange }) {
-    const [inputValue, setInputValue] = useState(5);
+    const [inputValue, setInputValue] = useState(25);
 
     const handleChange = (event) => {
         const newValue = event.target.value;
