@@ -1,0 +1,25 @@
+.table_container{
+    margin-top: 20px;
+}
+
+.table{
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #ddd;
+}
+
+.header{
+    padding: 8px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+    background-color: #f2f2f2;
+}
+
+.body tr{
+    text-align: center;
+    background-color: #f2f2f2;
+}
+
+.body tr:nth-child(odd){
+    background-color: #f9f9f9;
+}
