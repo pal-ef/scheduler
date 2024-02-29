@@ -46,7 +46,10 @@ class Proceso {
 // Tiempos
 // - [X] Llegada
 // - [X] Finalizacion
-// - [ ] Respuesta
+// - [X] Respuesta
+// - [X] Retorno
+// - [ ] Espera
+// - [ ] Servicio
 
 class Lot {
   contenido = []
@@ -83,6 +86,7 @@ export default function Aplicacion() {
   // --------------------
   const [memory, setMemory] = useState([])
   const [keyPressed, setKeyPressed] = useState()
+  const [blocked, setBlocked] = useState([]);
 
   let auxCounter = globalCounter;
 
@@ -113,23 +117,59 @@ export default function Aplicacion() {
       setCountdown(current_process.tme)
       
       let new_memory = memory.slice(1);
-      
-      if(lotes.length > 0 && memory.length < 4) {
+
+      if(lotes.length > 0) {
         let toBeAdded_process = lotes[0];
-        toBeAdded_process.tiempo_llegada = globalCounter;
-        new_memory.push(toBeAdded_process)
-      };
+        if(memory.length < 4 && blocked.length == 0){
+          // No hay bloqueados, espacio para mas procesos
+          toBeAdded_process.tiempo_llegada = globalCounter;
+          new_memory.push(toBeAdded_process)
+          setLotes(lotes.slice(1));
+        }
+        else if(memory.length == 1 && blocked.length == 2 || memory.length == 2 && blocked.length == 1){ // Queria terminar :(
+          // Si hay bloqueados, pero aun hay epacio para mas procesos
+          new_memory.push(...blocked);
+          setBlocked([]);
+          new_memory.push(toBeAdded_process);
+          setLotes(lotes.slice(1));
+        }
+      }
+      else if(lotes.length == 0 && blocked.length > 0){
+        // Hay bloqueados, pero ya no hay procesos nuevos
+        new_memory.push(...blocked);
+        setBlocked([]);
+      }
 
       setMemory(new_memory);
 
-      setLotes(lotes.slice(1));
-      
       if(current_process.tiempo_respuesta == null) current_process.tiempo_respuesta = globalCounter; 
       setCurrent(current_process);
       console.log(current_process.tiempo_respuesta);
 
       setProcessing(current_process);
-    } else {
+    }
+    else if(memory.length == 0 && blocked.length > 0){
+      // Si ya no hay procesos para ejecurar, pero hay procesos bloqueados
+      setMemory(memory.push(...blocked));
+      setBlocked([]);
+      let current_process = memory[0]
+      setCountdown(current_process.tme)
+      let new_memory = memory.slice(1);
+
+      if(lotes.length > 0 && memory.length < 4) {
+        let toBeAdded_process = lotes[0];
+        toBeAdded_process.tiempo_llegada = globalCounter;
+        new_memory.push(toBeAdded_process)
+        setLotes(lotes.slice(1));
+      };
+
+      setMemory(new_memory);
+
+      setCurrent(current_process);
+
+      setProcessing(current_process);
+    }
+    else {
       setStarted(false)
     }
   }, [trigger]);
@@ -143,7 +183,8 @@ export default function Aplicacion() {
     local_current.eta = countdown
 
     //setProcessing([...processing, current])
-    setMemory([...memory, current])
+    //setMemory([...memory, current])
+    setBlocked([...blocked, current]);
     setCurrent(null)
 
     setStarted(true)
@@ -247,7 +288,9 @@ export default function Aplicacion() {
 
   useEffect(() => {
     if (prevCurrent != null && !interrupted) {
+      // Proceso terminado
       prevCurrent.tiempo_finalizacion = globalCounter;
+      prevCurrent.tiempo_retorno = prevCurrent.tiempo_finalizacion - prevCurrent.tiempo_llegada;
       setProcessed([...processed, prevCurrent])
     }
     if (interrupted) {
@@ -337,6 +380,12 @@ export default function Aplicacion() {
             }
             <div className={styles.processing_zone}>
               {memory ? memory.map((pro) => (
+                <p key={pro.id} className={styles.proceso}>({pro.id}) Operación: {pro.operacion} ETA: {pro.eta}s TME: {pro.tme}s</p>
+              )) : null}
+            </div>
+
+            <div className={styles.processing_zone}>
+              {blocked ? blocked.map((pro) => (
                 <p key={pro.id} className={styles.proceso}>({pro.id}) Operación: {pro.operacion} ETA: {pro.eta}s TME: {pro.tme}s</p>
               )) : null}
             </div>
