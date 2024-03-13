@@ -11,6 +11,7 @@ import Modal from "../components/modal/Modal";
 import Entrada from "../components/input/Entrada";
 import Columna from "../components/columna/Columna";
 import Lote from "../components/lote/Lote";
+import Table from "../components/table/Table";
 
 function generateRandomExpression() {
   const operators = ['+', '-', '*', '/', '%'];
@@ -34,6 +35,7 @@ class Proceso {
     this.operacion_resuelta = evaluate(op)
 
     // TIEMPOS
+    this.haSidoBloqueado = false;
     this.tiempo_llegada = null
     this.tiempo_finalizacion = null
     this.tiempo_retorno = null
@@ -83,6 +85,7 @@ export default function Aplicacion() {
   const [int, setInt] = useState(false)
   const [interrupted, setInterrupted] = useState(false)
   const [globalCounter, setGlobalCounter] = useState(0);
+  const [finished, setFinished] = useState(false);
   // --------------------
   const [memory, setMemory] = useState([])
   const [keyPressed, setKeyPressed] = useState()
@@ -115,18 +118,18 @@ export default function Aplicacion() {
       // lotes == procesos
       let current_process = memory[0]
       setCountdown(current_process.tme)
-      
+
       let new_memory = memory.slice(1);
 
-      if(lotes.length > 0) {
+      if (lotes.length > 0) {
         let toBeAdded_process = lotes[0];
-        if(memory.length < 4 && blocked.length == 0){
+        if (memory.length < 4 && blocked.length == 0) {
           // No hay bloqueados, espacio para mas procesos
-          toBeAdded_process.tiempo_llegada = globalCounter;
+          toBeAdded_process.tiempo_llegada = globalCounter; // Seteo tiempo de llegada
           new_memory.push(toBeAdded_process)
           setLotes(lotes.slice(1));
         }
-        else if(memory.length == 1 && blocked.length == 2 || memory.length == 2 && blocked.length == 1){ // Queria terminar :(
+        else if (memory.length == 1 && blocked.length == 2 || memory.length == 2 && blocked.length == 1) { // Queria terminar :(
           // Si hay bloqueados, pero aun hay epacio para mas procesos
           new_memory.push(...blocked);
           setBlocked([]);
@@ -134,7 +137,7 @@ export default function Aplicacion() {
           setLotes(lotes.slice(1));
         }
       }
-      else if(lotes.length == 0 && blocked.length > 0){
+      else if (lotes.length == 0 && blocked.length > 0) {
         // Hay bloqueados, pero ya no hay procesos nuevos
         new_memory.push(...blocked);
         setBlocked([]);
@@ -142,13 +145,14 @@ export default function Aplicacion() {
 
       setMemory(new_memory);
 
-      if(current_process.tiempo_respuesta == null) current_process.tiempo_respuesta = globalCounter; 
+      // Seteo tiempo de respuesta
+      if (current_process.tiempo_respuesta == null) current_process.tiempo_respuesta = globalCounter;
       setCurrent(current_process);
       console.log(current_process.tiempo_respuesta);
 
       setProcessing(current_process);
     }
-    else if(memory.length == 0 && blocked.length > 0){
+    else if (memory.length == 0 && blocked.length > 0) {
       // Si ya no hay procesos para ejecurar, pero hay procesos bloqueados
       setMemory(memory.push(...blocked));
       setBlocked([]);
@@ -156,7 +160,7 @@ export default function Aplicacion() {
       setCountdown(current_process.tme)
       let new_memory = memory.slice(1);
 
-      if(lotes.length > 0 && memory.length < 4) {
+      if (lotes.length > 0 && memory.length < 4) {
         let toBeAdded_process = lotes[0];
         toBeAdded_process.tiempo_llegada = globalCounter;
         new_memory.push(toBeAdded_process)
@@ -170,6 +174,7 @@ export default function Aplicacion() {
       setProcessing(current_process);
     }
     else {
+      if (started) setFinished(true);
       setStarted(false)
     }
   }, [trigger]);
@@ -181,6 +186,7 @@ export default function Aplicacion() {
     // Set current remaining time
     let local_current = current
     local_current.eta = countdown
+    local_current.haSidoBloqueado = true;
 
     //setProcessing([...processing, current])
     //setMemory([...memory, current])
@@ -192,16 +198,16 @@ export default function Aplicacion() {
 
   const setToMemory = () => {
     // Paso #1 Lograr colocarlos en "ejecucion"
-    let new_memory = lotes.slice(0,3); 
+    let new_memory = lotes.slice(0, 3);
 
-    for(let i = 0; i < 3; i++) {
+    for (let i = 0; i < 3; i++) {
       new_memory[i].tiempo_llegada = 0;
     }
 
     setMemory(new_memory);
     setLotes(lotes.slice(3))
   }
-    
+
 
   // Cierra modal, crea lotes y los agrega
   const cerrar_modal_y_agregar = () => {
@@ -289,8 +295,18 @@ export default function Aplicacion() {
   useEffect(() => {
     if (prevCurrent != null && !interrupted) {
       // Proceso terminado
-      prevCurrent.tiempo_finalizacion = globalCounter;
+      prevCurrent.tiempo_finalizacion = globalCounter; // Seteo tiempo de finalizacion
+
+      // Seteo tiempo de retorno
       prevCurrent.tiempo_retorno = prevCurrent.tiempo_finalizacion - prevCurrent.tiempo_llegada;
+      
+      // Seteo de tiempo de servicio
+      if(prevCurrent.haSidoBloqueado) prevCurrent.tiempo_servicio = prevCurrent.tiempo_finalizacion;
+      else prevCurrent.tiempo_servicio = prevCurrent.tme;
+
+      // Seteo de tiempo de espera
+      prevCurrent.tiempo_espera = prevCurrent.tiempo_retorno - prevCurrent.tiempo_servicio;
+      
       setProcessed([...processed, prevCurrent])
     }
     if (interrupted) {
@@ -315,8 +331,8 @@ export default function Aplicacion() {
           setCountdown(countdown - 1); // Decrease the countdown by 1
         }
         else {
-            setTrigger(!trigger);
-            setCurrent(null);
+          setTrigger(!trigger);
+          setCurrent(null);
         }
       }, 1000); // Delay of 1000 milliseconds (1 second) for each countdown iteration
 
@@ -359,37 +375,42 @@ export default function Aplicacion() {
         <Columna title={lotes.length + " procesos en espera"}>
           {/* // Esto mapea los lotes y por cada lote crea un "Lote" */}
           {/* // TODO: Crear un solo "Lote" con todos los procesos */}
-            <Lote id={"Procesos "}>
-              {lotes ? lotes.map((pro) => (
-                <p key={pro.id} className={styles.proceso}>({pro.id}) Operación: {pro.operacion}</p>
-              )) : null }
-            </Lote>
-          
+          <Lote id={"Procesos "}>
+            {lotes ? lotes.map((pro) => (
+              <p key={pro.id} className={styles.proceso}>({pro.id}) Operación: {pro.operacion}</p>
+            )) : null}
+          </Lote>
+
         </Columna>
 
         <div className={styles.processing_zone_container}>
           <h2>{started ? "Procesando" : "Modo espera"}</h2>
-          <p className={styles.countdown}>Contador global: {globalCounter}</p>
-
-
-          <>
-            {started ? <p className={styles.countdown}>Faltan {countdown} segundos</p> : null}
-            {current ?
-              <p className={styles.procesoActual}>({current.id}) Resultado: {current.operacion} ETA: {current.eta}s TME: {current.tme}s</p>
-              : null
-            }
-            <div className={styles.processing_zone}>
-              {memory ? memory.map((pro) => (
-                <p key={pro.id} className={styles.proceso}>({pro.id}) Operación: {pro.operacion} ETA: {pro.eta}s TME: {pro.tme}s</p>
-              )) : null}
+          <p className={styles.counter}>Contador global: {globalCounter}</p>
+          {finished ?
+            <div className="table_zone">
+              <Table array={processed} />
             </div>
+            :
+            <>
+              <p className={styles.countdown}>Faltan {countdown} segundos</p>
+              {current ?
+                <p className={styles.procesoActual}>({current.id}) OP: {current.operacion} ETA: {current.eta}s TME: {current.tme}s</p>
+                : null
+              }
+              <div className={styles.processing_zone}>
+                {memory ? memory.map((pro) => (
+                  <p key={pro.id} className={styles.proceso}>({pro.id}) Operación: {pro.operacion} ETA: {pro.eta}s TME: {pro.tme}s</p>
+                )) : null}
+              </div>
 
-            <div className={styles.processing_zone}>
-              {blocked ? blocked.map((pro) => (
-                <p key={pro.id} className={styles.proceso}>({pro.id}) Operación: {pro.operacion} ETA: {pro.eta}s TME: {pro.tme}s</p>
-              )) : null}
-            </div>
-          </>
+              <h3 className={styles.title}>Bloqueados</h3>
+              <div className={styles.processing_zone}>
+                {blocked ? blocked.map((pro) => (
+                  <p key={pro.id} className={styles.proceso}>({pro.id}) Operación: {pro.operacion} ETA: {pro.eta}s TME: {pro.tme}s</p>
+                )) : null}
+              </div>
+            </>
+          }
         </div>
 
         <Columna title={"Terminados"}>

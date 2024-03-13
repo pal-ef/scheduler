@@ -8,8 +8,14 @@ const Table = ({array}) => {
                     <tr>
                         <th className={styles.header}>ID</th>
                         <th className={styles.header}>Operacion</th>
+                        {/* <th className={styles.header}>TME</th> */}
                         <th className={styles.header}>TME</th>
-                        <th className={styles.header}>ETA</th>
+                        <th className={styles.header}>TL</th>
+                        <th className={styles.header}>TF</th>
+                        <th className={styles.header}>TRES</th>
+                        <th className={styles.header}>TRET</th>
+                        <th className={styles.header}>TE</th>
+                        <th className={styles.header}>TS</th>
                         <th className={styles.header}>Resultado</th>
                     </tr>
                 </thead>
@@ -19,14 +25,19 @@ const Table = ({array}) => {
                             <td>{proceso.id}</td>
                             <td>{proceso.operacion}</td>
                             <td>{proceso.tme}</td>
-                            <td>{proceso.eta}</td>
+                            {/* <td>{proceso.eta}</td> */}
+                            <td>{proceso.tiempo_llegada}</td>
+                            <td>{proceso.tiempo_finalizacion}</td>
+                            <td>{proceso.tiempo_respuesta}</td>
+                            <td>{proceso.tiempo_retorno}</td>
+                            <td>{proceso.tiempo_espera}</td>
+                            <td>{proceso.tiempo_servicio}</td>
                             <td>{proceso.operacion_resuelta}</td>
                         </tr>
                     ))}
                 </tbody>
             </table>
         </div>
-        
     );
 }
 
