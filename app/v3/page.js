@@ -23,7 +23,7 @@ function generateRandomExpression() {
 }
 
 function generateRandomNumber() {
-  return Math.floor(Math.random() * 10) + 1; // Generates a random integer between 1 and 20
+  return Math.floor(Math.random() * (18 - 5 + 1)) + 5; // Generates a random integer between 1 and 20
 }
 
 class Proceso {
@@ -117,7 +117,7 @@ export default function Aplicacion() {
     if (memory.length > 0) {
       // lotes == procesos
       let current_process = memory[0]
-      setCountdown(current_process.tme)
+      setCountdown(current_process.eta)
 
       let new_memory = memory.slice(1);
 
@@ -133,7 +133,9 @@ export default function Aplicacion() {
           // Si hay bloqueados, pero aun hay epacio para mas procesos
           new_memory.push(...blocked);
           setBlocked([]);
+          toBeAdded_process.tiempo_llegada = globalCounter; // Seteo tiempo de llegada
           new_memory.push(toBeAdded_process);
+
           setLotes(lotes.slice(1));
         }
       }
@@ -146,7 +148,7 @@ export default function Aplicacion() {
       setMemory(new_memory);
 
       // Seteo tiempo de respuesta
-      if (current_process.tiempo_respuesta == null) current_process.tiempo_respuesta = globalCounter;
+      if (current_process.tiempo_respuesta == null) current_process.tiempo_respuesta = globalCounter - current_process.tiempo_llegada;
       setCurrent(current_process);
       console.log(current_process.tiempo_respuesta);
 
@@ -301,11 +303,11 @@ export default function Aplicacion() {
       prevCurrent.tiempo_retorno = prevCurrent.tiempo_finalizacion - prevCurrent.tiempo_llegada;
       
       // Seteo de tiempo de servicio
-      if(prevCurrent.haSidoBloqueado) prevCurrent.tiempo_servicio = prevCurrent.tiempo_finalizacion;
+      if(prevCurrent.haSidoBloqueado) prevCurrent.tiempo_servicio = prevCurrent.tme;
       else prevCurrent.tiempo_servicio = prevCurrent.tme;
 
       // Seteo de tiempo de espera
-      prevCurrent.tiempo_espera = prevCurrent.tiempo_retorno - prevCurrent.tiempo_servicio;
+      prevCurrent.tiempo_espera = Math.abs(prevCurrent.tiempo_retorno - prevCurrent.tiempo_servicio);
       
       setProcessed([...processed, prevCurrent])
     }
