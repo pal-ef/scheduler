@@ -26,6 +26,8 @@ function generateRandomNumber() {
   return Math.floor(Math.random() * (18 - 5 + 1)) + 5; // Generates a random integer between 1 and 20
 }
 
+let global_counter = 0;
+
 class Proceso {
   constructor(op, eta, id) {
     this.operacion = op;
@@ -33,6 +35,7 @@ class Proceso {
     this.eta = eta;
     this.id = id
     this.operacion_resuelta = evaluate(op)
+    this.tiempo_bloqueado = 0;
 
     // TIEMPOS
     this.haSidoBloqueado = false;
@@ -114,7 +117,9 @@ export default function Aplicacion() {
   }
 
   useEffect(() => {
-    if (memory.length > 0) {
+    if (memory.length == 0 && blocked.length > 0) {
+      setCountdown(10 - blocked[0].tiempo_bloqueado);
+    } else if (memory.length > 0) {
       // lotes == procesos
       let current_process = memory[0]
       setCountdown(current_process.eta)
@@ -122,28 +127,35 @@ export default function Aplicacion() {
       let new_memory = memory.slice(1);
 
       if (lotes.length > 0) {
-        let toBeAdded_process = lotes[0];
+        //let toBeAdded_process = lotes[0];
         if (memory.length < 4 && blocked.length == 0) {
           // No hay bloqueados, espacio para mas procesos
-          toBeAdded_process.tiempo_llegada = globalCounter; // Seteo tiempo de llegada
-          new_memory.push(toBeAdded_process)
-          setLotes(lotes.slice(1));
-        }
-        else if (memory.length == 1 && blocked.length == 2 || memory.length == 2 && blocked.length == 1) { // Queria terminar :(
-          // Si hay bloqueados, pero aun hay epacio para mas procesos
-          new_memory.push(...blocked);
-          setBlocked([]);
-          toBeAdded_process.tiempo_llegada = globalCounter; // Seteo tiempo de llegada
-          new_memory.push(toBeAdded_process);
+          let quantity = 4 - memory.length;
+          let toBeAddedProcesses = lotes.slice(0, quantity);
+          for (let process of toBeAddedProcesses) process.tiempo_llegada = globalCounter;
+          setLotes(lotes.slice(quantity));
+          new_memory = new_memory.concat(toBeAddedProcesses);
 
-          setLotes(lotes.slice(1));
+
+          // toBeAdded_process.tiempo_llegada = globalCounter; // Seteo tiempo de llegada
+          // new_memory.push(toBeAdded_process)
+          // setLotes(lotes.slice(1));
         }
+        // else if (memory.length == 1 && blocked.length == 2 || memory.length == 2 && blocked.length == 1) { // Queria terminar :(
+        //   // Si hay bloqueados, pero aun hay epacio para mas procesos
+        //   new_memory.push(...blocked);
+        //   setBlocked([]);
+        //   toBeAdded_process.tiempo_llegada = globalCounter; // Seteo tiempo de llegada
+        //   new_memory.push(toBeAdded_process);
+
+        //   setLotes(lotes.slice(1));
+        // }
       }
-      else if (lotes.length == 0 && blocked.length > 0) {
-        // Hay bloqueados, pero ya no hay procesos nuevos
-        new_memory.push(...blocked);
-        setBlocked([]);
-      }
+      // else if (lotes.length == 0 && blocked.length > 0) {
+      //   // Hay bloqueados, pero ya no hay procesos nuevos
+      //   new_memory.push(...blocked);
+      //   setBlocked([]);
+      // }
 
       setMemory(new_memory);
 
@@ -154,27 +166,27 @@ export default function Aplicacion() {
 
       setProcessing(current_process);
     }
-    else if (memory.length == 0 && blocked.length > 0) {
-      // Si ya no hay procesos para ejecurar, pero hay procesos bloqueados
-      setMemory(memory.push(...blocked));
-      setBlocked([]);
-      let current_process = memory[0]
-      setCountdown(current_process.tme)
-      let new_memory = memory.slice(1);
+    // else if (memory.length == 0 && blocked.length > 0) {
+    //   // Si ya no hay procesos para ejecurar, pero hay procesos bloqueados
+    //   setMemory(memory.push(...blocked));
+    //   setBlocked([]);
+    //   let current_process = memory[0]
+    //   setCountdown(current_process.tme)
+    //   let new_memory = memory.slice(1);
 
-      if (lotes.length > 0 && memory.length < 4) {
-        let toBeAdded_process = lotes[0];
-        toBeAdded_process.tiempo_llegada = globalCounter;
-        new_memory.push(toBeAdded_process)
-        setLotes(lotes.slice(1));
-      };
+    //   if (lotes.length > 0 && memory.length < 4) {
+    //     let toBeAdded_process = lotes[0];
+    //     toBeAdded_process.tiempo_llegada = globalCounter;
+    //     new_memory.push(toBeAdded_process)
+    //     setLotes(lotes.slice(1));
+    //   };
 
-      setMemory(new_memory);
+    //   setMemory(new_memory);
 
-      setCurrent(current_process);
+    //   setCurrent(current_process);
 
-      setProcessing(current_process);
-    }
+    //   setProcessing(current_process);
+    // }
     else {
       if (started) setFinished(true);
       setStarted(false)
@@ -186,8 +198,9 @@ export default function Aplicacion() {
     setStarted(false)
 
     // Set current remaining time
-    let local_current = current
-    local_current.eta = countdown
+    console.log("El valor de current es:" + current);
+    let local_current = current;
+    local_current.eta = countdown;
     local_current.haSidoBloqueado = true;
 
     //setProcessing([...processing, current])
@@ -215,27 +228,44 @@ export default function Aplicacion() {
   const cerrar_modal_y_agregar = () => {
     setModalOpen(false)
 
-    let global_counter = 0
     let l = []
 
     for (let i = 0; i < nProcess; i++) {
       l.push(new Proceso(generateRandomExpression(), generateRandomNumber(), global_counter))
       global_counter++;
     }
+
     setLotes(l)
+  }
+
+  const agregar_proceso_random = () => {
+    const p = new Proceso(generateRandomExpression(), generateRandomNumber(), global_counter);
+    global_counter++;
+
+    setLotes([...lotes, p]);
   }
 
   const handleKeyDown = (event) => {
     setKeyPressed(event.key)
 
-    if (event.key == 'w') {
+    if (event.key == 'w' || event.key == 'W') {
       terminateWithError()
-    } else if (event.key == 'e') {
+    } else if (event.key == 'e' || event.key == 'E') {
       interrumpir_procesos()
-    } else if (event.key == 'p') {
+    } else if (event.key == 'p' || event.key == 'P') {
       pausar()
-    } else if (event.key == 'c') {
+    } else if (event.key == 'c' || event.key == 'C') {
       continuar()
+    } else if(event.key == 'n' || event.key == 'N') {
+      agregar_proceso_random();
+    } else if(event.key == 'b' || event.key == 'B') {
+      if(finished) {
+        setFinished(false);
+        continuar();
+      } else {
+        pausar();
+        setFinished(true);
+      }
     }
   };
 
@@ -301,14 +331,14 @@ export default function Aplicacion() {
 
       // Seteo tiempo de retorno
       prevCurrent.tiempo_retorno = prevCurrent.tiempo_finalizacion - prevCurrent.tiempo_llegada;
-      
+
       // Seteo de tiempo de servicio
-      if(prevCurrent.haSidoBloqueado) prevCurrent.tiempo_servicio = prevCurrent.tme;
+      if (prevCurrent.haSidoBloqueado) prevCurrent.tiempo_servicio = prevCurrent.tme;
       else prevCurrent.tiempo_servicio = prevCurrent.tme;
 
       // Seteo de tiempo de espera
-      prevCurrent.tiempo_espera = Math.abs(prevCurrent.tiempo_retorno - prevCurrent.tiempo_servicio);
-      
+      prevCurrent.tiempo_espera = prevCurrent.tiempo_retorno - prevCurrent.tiempo_servicio;
+
       setProcessed([...processed, prevCurrent])
     }
     if (interrupted) {
@@ -331,6 +361,23 @@ export default function Aplicacion() {
         setGlobalCounter(auxCounter);
         if (countdown > 1) {
           setCountdown(countdown - 1); // Decrease the countdown by 1
+
+          // Aumentar un segundo a todos los proceso dentro de bloqueados
+          setBlocked(blocked.map(proceso => {
+            const p = { ...proceso };
+            p.tiempo_bloqueado++;
+            return p;
+          }));
+
+          // y a todos los proceso dentro de bloqueados es igual a 8 entonces metelo dentro de memoria
+          if (blocked[0].tiempo_bloqueado >= 8) {
+            let newBlocked = blocked;
+            const toReturn = newBlocked.shift();
+            setBlocked(newBlocked);
+
+            toReturn.tiempo_bloqueado = 0;
+            setMemory([...memory, toReturn]);
+          }
         }
         else {
           setTrigger(!trigger);
@@ -408,7 +455,7 @@ export default function Aplicacion() {
               <h3 className={styles.title}>Bloqueados</h3>
               <div className={styles.processing_zone}>
                 {blocked ? blocked.map((pro) => (
-                  <p key={pro.id} className={styles.proceso}>({pro.id}) Operación: {pro.operacion} ETA: {pro.eta}s TME: {pro.tme}s</p>
+                  <p key={pro.id} className={styles.proceso}>({pro.id}) Operación: {pro.operacion} TB: {pro.tiempo_bloqueado}</p>
                 )) : null}
               </div>
             </>
