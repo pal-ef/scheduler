@@ -93,6 +93,7 @@ export default function Aplicacion() {
   const [memory, setMemory] = useState([])
   const [keyPressed, setKeyPressed] = useState()
   const [blocked, setBlocked] = useState([]);
+  
 
   let auxCounter = globalCounter;
 
@@ -135,70 +136,52 @@ export default function Aplicacion() {
           for (let process of toBeAddedProcesses) process.tiempo_llegada = globalCounter;
           setLotes(lotes.slice(quantity));
           new_memory = new_memory.concat(toBeAddedProcesses);
-
-
-          // toBeAdded_process.tiempo_llegada = globalCounter; // Seteo tiempo de llegada
-          // new_memory.push(toBeAdded_process)
-          // setLotes(lotes.slice(1));
         }
-        // else if (memory.length == 1 && blocked.length == 2 || memory.length == 2 && blocked.length == 1) { // Queria terminar :(
-        //   // Si hay bloqueados, pero aun hay epacio para mas procesos
-        //   new_memory.push(...blocked);
-        //   setBlocked([]);
-        //   toBeAdded_process.tiempo_llegada = globalCounter; // Seteo tiempo de llegada
-        //   new_memory.push(toBeAdded_process);
-
-        //   setLotes(lotes.slice(1));
-        // }
+        // memory.length == 1 && blocked.length == 2 || memory.length == 2 && blocked.length == 1
       }
-      // else if (lotes.length == 0 && blocked.length > 0) {
-      //   // Hay bloqueados, pero ya no hay procesos nuevos
-      //   new_memory.push(...blocked);
-      //   setBlocked([]);
-      // }
 
       setMemory(new_memory);
 
-      // Seteo tiempo de respuesta
-      if (current_process.tiempo_respuesta == null) current_process.tiempo_respuesta = globalCounter - current_process.tiempo_llegada;
-      setCurrent(current_process);
-      console.log(current_process.tiempo_respuesta);
 
-      setProcessing(current_process);
+
+
+        // Seteo tiempo de respuesta
+        if (current_process.tiempo_respuesta == null) current_process.tiempo_respuesta = globalCounter - current_process.tiempo_llegada;
+        setCurrent(current_process);
+
+        setProcessing(current_process);
+      
+
     }
-    // else if (memory.length == 0 && blocked.length > 0) {
-    //   // Si ya no hay procesos para ejecurar, pero hay procesos bloqueados
-    //   setMemory(memory.push(...blocked));
-    //   setBlocked([]);
-    //   let current_process = memory[0]
-    //   setCountdown(current_process.tme)
-    //   let new_memory = memory.slice(1);
-
-    //   if (lotes.length > 0 && memory.length < 4) {
-    //     let toBeAdded_process = lotes[0];
-    //     toBeAdded_process.tiempo_llegada = globalCounter;
-    //     new_memory.push(toBeAdded_process)
-    //     setLotes(lotes.slice(1));
-    //   };
-
-    //   setMemory(new_memory);
-
-    //   setCurrent(current_process);
-
-    //   setProcessing(current_process);
-    // }
     else {
       if (started) setFinished(true);
       setStarted(false)
     }
   }, [trigger]);
 
+  const addOneProcess= () => {
+
+
+    let toBeAddedProcess = lotes[0];
+    toBeAddedProcess.tiempo_llegada = globalCounter;
+    let oldLotes = lotes;
+    oldLotes.shift();
+    setLotes(oldLotes);
+    let new_memory = memory;
+    new_memory.push(toBeAddedProcess);
+
+
+
+
+    setMemory(new_memory);
+  }
+
   const interrumpir_procesos = () => {
     setInterrupted(true)
     setStarted(false)
 
     // Set current remaining time
-    console.log("El valor de current es:" + current);
+    // ("El valor de current es:" + current);
     let local_current = current;
     local_current.eta = countdown;
     local_current.haSidoBloqueado = true;
@@ -215,7 +198,7 @@ export default function Aplicacion() {
     // Paso #1 Lograr colocarlos en "ejecucion"
     let new_memory = lotes.slice(0, 3);
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < new_memory.length; i++) {
       new_memory[i].tiempo_llegada = 0;
     }
 
@@ -256,10 +239,10 @@ export default function Aplicacion() {
       pausar()
     } else if (event.key == 'c' || event.key == 'C') {
       continuar()
-    } else if(event.key == 'n' || event.key == 'N') {
+    } else if (event.key == 'n' || event.key == 'N') {
       agregar_proceso_random();
-    } else if(event.key == 'b' || event.key == 'B') {
-      if(finished) {
+    } else if (event.key == 'b' || event.key == 'B') {
+      if (finished) {
         setFinished(false);
         continuar();
       } else {
@@ -360,6 +343,9 @@ export default function Aplicacion() {
         auxCounter++;
         setGlobalCounter(auxCounter);
         if (countdown > 1) {
+          if (memory.length < 3 && blocked.length == 0 && lotes.length > 0) {
+            addOneProcess();
+          }
           setCountdown(countdown - 1); // Decrease the countdown by 1
 
           // Aumentar un segundo a todos los proceso dentro de bloqueados
@@ -370,14 +356,18 @@ export default function Aplicacion() {
           }));
 
           // y a todos los proceso dentro de bloqueados es igual a 8 entonces metelo dentro de memoria
-          if (blocked[0].tiempo_bloqueado >= 8) {
-            let newBlocked = blocked;
-            const toReturn = newBlocked.shift();
-            setBlocked(newBlocked);
-
-            toReturn.tiempo_bloqueado = 0;
-            setMemory([...memory, toReturn]);
+          if (blocked.length > 0){
+            if (blocked[0].tiempo_bloqueado >= 8) {
+              let newBlocked = blocked;
+              const toReturn = newBlocked.shift();
+              setBlocked(newBlocked);
+  
+              toReturn.tiempo_bloqueado = 0;
+              setMemory([...memory, toReturn]);
+            }
           }
+          
+
         }
         else {
           setTrigger(!trigger);
