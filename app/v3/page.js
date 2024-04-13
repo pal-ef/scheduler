@@ -93,7 +93,8 @@ export default function Aplicacion() {
   const [memory, setMemory] = useState([])
   const [keyPressed, setKeyPressed] = useState()
   const [blocked, setBlocked] = useState([]);
-  
+  const [tableArray, setTableArray] = useState([]);
+  const [arrayCopy, setArrayCopy] = useState([]);
 
   let auxCounter = globalCounter;
 
@@ -160,8 +161,6 @@ export default function Aplicacion() {
   }, [trigger]);
 
   const addOneProcess= () => {
-
-
     let toBeAddedProcess = lotes[0];
     toBeAddedProcess.tiempo_llegada = globalCounter;
     let oldLotes = lotes;
@@ -169,9 +168,6 @@ export default function Aplicacion() {
     setLotes(oldLotes);
     let new_memory = memory;
     new_memory.push(toBeAddedProcess);
-
-
-
 
     setMemory(new_memory);
   }
@@ -243,9 +239,28 @@ export default function Aplicacion() {
       agregar_proceso_random();
     } else if (event.key == 'b' || event.key == 'B') {
       if (finished) {
+        setTableArray(arrayCopy);
         setFinished(false);
         continuar();
       } else {
+        let copy = [current];
+        copy = copy.concat(processed);
+        console.log(processed)
+        copy = copy.concat(memory);
+        copy = copy.concat(blocked);
+        
+        setArrayCopy(tableArray)
+        if (tableArray.length == 0){
+          setTableArray(copy);
+        }
+        else{
+          let tmp = tableArray
+          tableArray.concat(copy)
+          setTableArray(tmp);
+
+          //console.log(tableArray);
+        }
+        
         pausar();
         setFinished(true);
       }
@@ -303,6 +318,12 @@ export default function Aplicacion() {
   useEffect(() => {
     if (current) {
       setProcessed([...processed, current])
+      if (tableArray.length == 0){
+        setTableArray([current]);
+      } else {
+        setTableArray([...tableArray, current]);
+      }
+      
     }
   }, [trigger2]);
 
@@ -343,7 +364,7 @@ export default function Aplicacion() {
         auxCounter++;
         setGlobalCounter(auxCounter);
         if (countdown > 1) {
-          if (memory.length < 3 && blocked.length == 0 && lotes.length > 0) {
+          if ((memory.length + blocked.length) < 3 && lotes.length > 0) {
             addOneProcess();
           }
           setCountdown(countdown - 1); // Decrease the countdown by 1
@@ -427,7 +448,8 @@ export default function Aplicacion() {
           <p className={styles.counter}>Contador global: {globalCounter}</p>
           {finished ?
             <div className="table_zone">
-              <Table array={processed} />
+              
+              <Table array={tableArray} />
             </div>
             :
             <>
