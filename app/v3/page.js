@@ -239,28 +239,36 @@ export default function Aplicacion() {
       agregar_proceso_random();
     } else if (event.key == 'b' || event.key == 'B') {
       if (finished) {
+        console.log("IF FINISHED");
         setTableArray(arrayCopy);
         setFinished(false);
         continuar();
       } else {
-        let copy = [current];
+        console.log("ELSE");
+        let copy = [];
+        if (current){
+          copy[0] = current;
+        }
         copy = copy.concat(processed);
-        console.log(processed)
+        //console.log(processed)
         copy = copy.concat(memory);
         copy = copy.concat(blocked);
         
-        setArrayCopy(tableArray)
+        
+        console.log(copy);
         if (tableArray.length == 0){
+          console.log("IF TABLE LENGTH 0");
           setTableArray(copy);
         }
         else{
+          console.log("ELSE IF TABLE LENGTH 0");
           let tmp = tableArray
           tableArray.concat(copy)
-          setTableArray(tmp);
+          setTableArray(tmp); 
 
-          //console.log(tableArray);
+          console.log(tableArray);
         }
-        
+        setArrayCopy(tableArray)
         pausar();
         setFinished(true);
       }
